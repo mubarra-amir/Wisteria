@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-
+const WISTERIA_COLOR = 0x9B59B6; 
 // ===================== MAGIC 8-BALL =====================
 const eightBallResponses = [
   { text: 'It is certain! ✅', color: 0x57F287 },
@@ -624,7 +624,6 @@ const pollCmd = {
   },
 };
 
-const WISTERIA_COLOR = 0x9B59B6;
 
 module.exports = [
   eightBallCmd, jokeCmd, flipCmd, factCmd, complimentCmd, roastCmd,
