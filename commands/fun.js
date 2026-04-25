@@ -996,11 +996,16 @@ const truths = [
   "What's the most awkward nickname you've been given?",
   "If you were invisible for a day, what would you do?",
   "What's your strangest habit?",
+  "Have you ever walked into a glass door or wall in public?",
+  "What's the most childish thing you still do?",
+  "Have you ever pretended to be busy to avoid someone?",
+  "What's the worst grade you ever got and what was the subject?",
+  "Have you ever sniffed your own armpits in public?",
 ];
 
-const dares = [
+// Regular dares (text-only, low consequence)
+const regularDares = [
   "Type a message using only emoji for the next 3 messages!",
-  "Change your nickname to 'Wisteria's #1 Fan' for 5 minutes!",
   "Say something nice about the last 3 people who typed in this channel!",
   "Write a 3-line poem about your favorite food right now!",
   "Type everything in ALL CAPS for the next 2 minutes!",
@@ -1015,6 +1020,28 @@ const dares = [
   "Make up a new word and define it in chat!",
   "Write a haiku about Wisteria bot!",
 ];
+
+// Embarrassing dares — refusing these triggers nickname punishment
+const embarrassingDares = [
+  { text: "Change your nickname to '🐔 Chicken Lord 🐔' for 5 minutes!", nickname: '🐔 Chicken Lord 🐔' },
+  { text: "Change your nickname to 'I Lost a Dare 😭' for 5 minutes!", nickname: 'I Lost a Dare 😭' },
+  { text: "Change your nickname to 'Professional Loser 🏆' for 5 minutes!", nickname: 'Professional Loser 🏆' },
+  { text: "Change your nickname to '🍌 Banana Boy/Girl 🍌' for 5 minutes!", nickname: '🍌 Banana Boy/Girl 🍌' },
+  { text: "Change your nickname to 'Wisteria's #1 Fan 🌸' for 5 minutes!", nickname: "Wisteria's #1 Fan 🌸" },
+  { text: "Change your nickname to '🤡 Clown of the Server 🤡' for 5 minutes!", nickname: '🤡 Clown of the Server 🤡' },
+  { text: "Change your nickname to 'Toast Enthusiast 🍞' for 5 minutes!", nickname: 'Toast Enthusiast 🍞' },
+  { text: "Change your nickname to '😤 I Lost a Dare' for 5 minutes!", nickname: '😤 I Lost a Dare' },
+];
+
+// Pick a dare: 40% chance of embarrassing dare, 60% regular
+function pickDare() {
+  if (Math.random() < 0.4) {
+    const d = embarrassingDares[Math.floor(Math.random() * embarrassingDares.length)];
+    return { text: d.text, isEmbarrassing: true, nickname: d.nickname };
+  }
+  const t = regularDares[Math.floor(Math.random() * regularDares.length)];
+  return { text: t, isEmbarrassing: false, nickname: null };
+}
 
 const truthCmd = {
   name: 'truth',
@@ -1070,15 +1097,62 @@ const truthCmd = {
   },
 };
 
+// Helper: change a member's nickname and revert after a delay
+async function applyNicknamePunishment(message, nicknameTxt) {
+  const guild = message.guild;
+  const member = await guild.members.fetch(message.author.id).catch(() => null);
+  if (!member) return;
+
+  const me = guild.members.me;
+  // Bot needs ManageNicknames and must be higher than target
+  if (!me.permissions.has('ManageNicknames')) return;
+  if (me.roles.highest.position <= member.roles.highest.position) return;
+
+  const originalNick = member.nickname;
+  try {
+    await member.setNickname(nicknameTxt, 'Dare punishment');
+
+    // Announce it
+    const nickEmbed = new EmbedBuilder()
+      .setTitle('😈 Nickname Punishment!')
+      .setColor(0xED4245)
+      .setDescription(`**${message.author.username}** refused the dare, so their nickname has been changed to **${nicknameTxt}** for 5 minutes! They can't change it back! 😂`)
+      .setFooter({ text: 'Should\'ve done the dare! | Wisteria 🌸' });
+    message.channel.send({ embeds: [nickEmbed] });
+
+    // Revert after 5 minutes
+    setTimeout(async () => {
+      try {
+        const freshMember = await guild.members.fetch(message.author.id).catch(() => null);
+        if (!freshMember) return;
+        // Only revert if nickname is still the punishment nickname
+        if (freshMember.nickname === nicknameTxt) {
+          await freshMember.setNickname(originalNick, 'Dare punishment expired');
+          const revertEmbed = new EmbedBuilder()
+            .setTitle('✅ Nickname Punishment Expired!')
+            .setColor(0x57F287)
+            .setDescription(`**${message.author.username}**'s nickname punishment is over. They're free... for now. 😏`)
+            .setFooter({ text: 'Wisteria 🌸' });
+          message.channel.send({ embeds: [revertEmbed] });
+        }
+      } catch {}
+    }, 5 * 60 * 1000);
+  } catch {}
+}
+
 const dareCmd = {
   name: 'dare',
-  description: 'Get a Dare!',
+  description: 'Get a Dare! (Some dares are embarrassing — refuse and face nickname punishment!)',
   async execute(message) {
-    const d = dares[Math.floor(Math.random() * dares.length)];
+    const dare = pickDare();
+    const warningText = dare.isEmbarrassing
+      ? '\n\n⚠️ **This is an embarrassing dare!** If you refuse (❌), your nickname will be forcibly changed for 5 minutes!'
+      : '';
+
     const embed = new EmbedBuilder()
-      .setTitle('😈 Dare!')
-      .setColor(0xED4245)
-      .setDescription(`**${message.author.username}**, you dare:\n\n> ${d}`)
+      .setTitle(dare.isEmbarrassing ? '😈 Embarrassing Dare!' : '😈 Dare!')
+      .setColor(dare.isEmbarrassing ? 0xFF6B00 : 0xED4245)
+      .setDescription(`**${message.author.username}**, your dare:\n\n> ${dare.text}${warningText}`)
       .setFooter({ text: 'No chickening out! React ✅ when done, ❌ if you refuse! | Wisteria 🌸' });
     const sent = await message.reply({ embeds: [embed] });
     await sent.react('✅');
@@ -1097,23 +1171,29 @@ const dareCmd = {
           .setFooter({ text: 'Brave soul! | Wisteria 🌸' });
         message.channel.send({ embeds: [successEmbed] });
       } else {
-        const failPenalties = [
-          'You must let the group change your profile picture for 24 hours!',
-          'You have to post an embarrassing status/story!',
-          'You owe everyone a 30-second dance performance!',
-          'You must send a voice message singing a nursery rhyme!',
-          'You have to let someone go through your photos for 30 seconds!',
-        ];
-        const penalty = failPenalties[Math.floor(Math.random() * failPenalties.length)];
-        const failEmbed = new EmbedBuilder()
-          .setTitle('❌ Dare Refused — Penalty Time!')
-          .setColor(0xED4245)
-          .setDescription(`**${message.author.username}** refused the dare! Coward! 🐔\n\n**Penalty:** ${penalty}`)
-          .setFooter({ text: 'Courage is a choice! | Wisteria 🌸' });
-        message.channel.send({ embeds: [failEmbed] });
+        if (dare.isEmbarrassing && dare.nickname) {
+          // Nickname punishment for embarrassing dare refusal
+          await applyNicknamePunishment(message, dare.nickname);
+        } else {
+          // Regular penalty for normal dare refusal
+          const failPenalties = [
+            'You must let the group change your profile picture for 24 hours!',
+            'You have to post an embarrassing status/story!',
+            'You owe everyone a 30-second dance performance!',
+            'You must send a voice message singing a nursery rhyme!',
+            'You have to let someone go through your photos for 30 seconds!',
+          ];
+          const penalty = failPenalties[Math.floor(Math.random() * failPenalties.length)];
+          const failEmbed = new EmbedBuilder()
+            .setTitle('❌ Dare Refused — Penalty Time!')
+            .setColor(0xED4245)
+            .setDescription(`**${message.author.username}** refused the dare! Coward! 🐔\n\n**Penalty:** ${penalty}`)
+            .setFooter({ text: 'Courage is a choice! | Wisteria 🌸' });
+          message.channel.send({ embeds: [failEmbed] });
+        }
       }
     } catch {
-      // Timed out — no reaction
+      // Timed out
       const timeoutEmbed = new EmbedBuilder()
         .setTitle('⏰ Time\'s Up — Penalty Time!')
         .setColor(0xFEE75C)
