@@ -41,10 +41,15 @@ module.exports = {
   categories: Object.keys(gifCategories),
 
   async execute(message, args) {
-    const apiKey = process.env.TENOR_API_KEY;
+    // Supports TENOR_API_KEY (correct name) or GIPHY_API_KEY as a fallback alias
+    const apiKey = process.env.TENOR_API_KEY || process.env.GIPHY_API_KEY;
 
     if (!apiKey) {
-      return message.reply('⚠️ GIFs are not configured yet! Ask the server admin to add a `TENOR_API_KEY` to the bot config.');
+      return message.reply(
+        '⚠️ GIFs are not configured! Add `TENOR_API_KEY=your_key` to your `.env` file.\n' +
+        '🔑 Get a free key at: https://tenor.com/developer/keyregistration\n' +
+        '*(Note: This bot uses **Tenor**, not Giphy — make sure your key is from Tenor!)*'
+      );
     }
 
     const input = args.join(' ').toLowerCase().trim();

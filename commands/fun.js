@@ -413,7 +413,7 @@ const mockCmd = {
 
 // ===================== GIF HELPER =====================
 async function fetchGif(query) {
-  const apiKey = process.env.TENOR_API_KEY;
+  const apiKey = process.env.TENOR_API_KEY || process.env.GIPHY_API_KEY;
   if (!apiKey) return null;
   try {
     const encoded = encodeURIComponent(query);
@@ -1245,4 +1245,11 @@ module.exports = [
   eightBallCmd, jokeCmd, flipCmd, factCmd, complimentCmd, roastCmd,
   shipCmd, chooseCmd, avatarCmd, uwuCmd, pirateCmd, reverseCmd, mockCmd,
   hugCmd, highfiveCmd, patCmd, slotsCmd, truthCmd, dareCmd, pollCmd,
+  // Interaction/reaction commands
+  slapCmd, hitCmd, punchCmd, kickfunCmd,
+  meowCmd, clapCmd, waveCmd, pokeCmd, boopCmd,
+  cuddleCmd, biteCmd, lickCmd, stareCmd, cryCmd,
+  blushCmd, danceCmd, winkCmd, smugCmd, facepalmCmd,
+  throwCmd, shrugCmd, screamCmd, confusedCmd, shockedCmd,
+  laughCmd, celebrateCmd, insultCmd,
 ];

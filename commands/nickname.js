@@ -10,8 +10,19 @@ const nickCmd = {
       return message.reply("❌ I don't have **Manage Nicknames** permission! Ask a server admin to grant it.");
     }
 
-    const target = message.mentions.members.first();
-    if (!target) return message.reply('❓ Usage: `!nick @user <new nickname>`\nExample: `!nick @John CoolDude`');
+    // Robust fetch: try mention then raw ID (fixes caching issues)
+    let target;
+    const mentionedUser = message.mentions.users.first();
+    if (mentionedUser) {
+      try { target = await message.guild.members.fetch(mentionedUser.id); } catch { /* fall through */ }
+    }
+    if (!target) {
+      const rawId = args[0]?.replace(/\D/g, '');
+      if (rawId?.length >= 17) {
+        try { target = await message.guild.members.fetch(rawId); } catch { /* fall through */ }
+      }
+    }
+    if (!target) return message.reply('❌ Couldn\'t find that member in this server!\nUsage: `!nick @user <new nickname>`');
 
     const newNick = args.slice(1).join(' ').trim();
     if (!newNick) return message.reply('❓ Please provide a nickname!\nUsage: `!nick @user <new nickname>`');
@@ -53,8 +64,19 @@ const resetNickCmd = {
       return message.reply("❌ I don't have **Manage Nicknames** permission!");
     }
 
-    const target = message.mentions.members.first();
-    if (!target) return message.reply('❓ Usage: `!resetnick @user`');
+    // Robust fetch
+    let target;
+    const mentionedUser = message.mentions.users.first();
+    if (mentionedUser) {
+      try { target = await message.guild.members.fetch(mentionedUser.id); } catch { /* fall through */ }
+    }
+    if (!target) {
+      const rawId = args[0]?.replace(/\D/g, '');
+      if (rawId?.length >= 17) {
+        try { target = await message.guild.members.fetch(rawId); } catch { /* fall through */ }
+      }
+    }
+    if (!target) return message.reply('❌ Couldn\'t find that member! Usage: `!resetnick @user`');
 
     if (target.roles.highest.position >= message.guild.members.me.roles.highest.position) {
       return message.reply("❌ I can't change the nickname of someone with a higher or equal role than me!");
@@ -116,7 +138,18 @@ const randomNickCmd = {
       return message.reply("❌ I don't have **Manage Nicknames** permission!");
     }
 
-    const target = message.mentions.members.first();
+    // Robust fetch
+    let target;
+    const mentionedUser = message.mentions.users.first();
+    if (mentionedUser) {
+      try { target = await message.guild.members.fetch(mentionedUser.id); } catch { /* fall through */ }
+    }
+    if (!target) {
+      const rawId = args[0]?.replace(/\D/g, '');
+      if (rawId?.length >= 17) {
+        try { target = await message.guild.members.fetch(rawId); } catch { /* fall through */ }
+      }
+    }
     if (!target) return message.reply('❓ Usage: `!randomnick @user`');
 
     if (target.roles.highest.position >= message.guild.members.me.roles.highest.position) {
