@@ -413,17 +413,18 @@ const mockCmd = {
 
 // ===================== GIF HELPER =====================
 async function fetchGif(query) {
-  const apiKey = process.env.TENOR_API_KEY || process.env.GIPHY_API_KEY;
+  const apiKey = process.env.GIPHY_API_KEY;
   if (!apiKey) return null;
   try {
     const encoded = encodeURIComponent(query);
-    const url = `https://tenor.googleapis.com/v2/search?q=${encoded}&key=${apiKey}&limit=20&contentfilter=medium`;
+    const offset = Math.floor(Math.random() * 50);
+    const url = `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encoded}&limit=20&offset=${offset}&rating=pg-13&lang=en`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
-    if (!data.results || data.results.length === 0) return null;
-    const item = data.results[Math.floor(Math.random() * data.results.length)];
-    return item.media_formats?.gif?.url || item.media_formats?.tinygif?.url || null;
+    if (!data.data || data.data.length === 0) return null;
+    const item = data.data[Math.floor(Math.random() * data.data.length)];
+    return item?.images?.original?.url || item?.images?.downsized?.url || null;
   } catch { return null; }
 }
 

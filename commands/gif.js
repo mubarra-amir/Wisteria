@@ -19,20 +19,22 @@ const gifCategories = {
   nope: ['nope no way', 'absolutely not nope', 'shaking head no'],
 };
 
-// Tenor GIF fetch helper
+// Giphy GIF fetch helper
 async function fetchGif(query, apiKey) {
   const encoded = encodeURIComponent(query);
-  const url = `https://tenor.googleapis.com/v2/search?q=${encoded}&key=${apiKey}&limit=20&contentfilter=medium`;
+  // Random offset so you get variety instead of the same GIFs every time
+  const offset = Math.floor(Math.random() * 50);
+  const url = `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encoded}&limit=20&offset=${offset}&rating=pg-13&lang=en`;
 
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Tenor API error');
+  if (!res.ok) throw new Error(`Giphy API error: ${res.status}`);
   const data = await res.json();
 
-  if (!data.results || data.results.length === 0) return null;
+  if (!data.data || data.data.length === 0) return null;
 
-  // Pick a random result from top 20
-  const item = data.results[Math.floor(Math.random() * data.results.length)];
-  return item.media_formats?.gif?.url || item.media_formats?.tinygif?.url || null;
+  // Pick a random result from the batch
+  const item = data.data[Math.floor(Math.random() * data.data.length)];
+  return item?.images?.original?.url || item?.images?.downsized?.url || null;
 }
 
 module.exports = {
@@ -41,14 +43,13 @@ module.exports = {
   categories: Object.keys(gifCategories),
 
   async execute(message, args) {
-    // Supports TENOR_API_KEY (correct name) or GIPHY_API_KEY as a fallback alias
-    const apiKey = process.env.TENOR_API_KEY || process.env.GIPHY_API_KEY;
+    const apiKey = process.env.GIPHY_API_KEY;
 
     if (!apiKey) {
       return message.reply(
-        '⚠️ GIFs are not configured! Add `TENOR_API_KEY=your_key` to your `.env` file.\n' +
-        '🔑 Get a free key at: https://tenor.com/developer/keyregistration\n' +
-        '*(Note: This bot uses **Tenor**, not Giphy — make sure your key is from Tenor!)*'
+        '⚠️ GIFs are not configured! Add `GIPHY_API_KEY=your_key` to your `.env` file.\n' +
+        '🔑 Get a free key at: https://developers.giphy.com/dashboard\n' +
+        '*(Sign up → Create an App → choose API → copy your key!)*'
       );
     }
 
@@ -59,7 +60,7 @@ module.exports = {
       return message.reply(`🎬 **GIF Categories:** ${list}\n\nUsage: \`!gif <category>\` or \`!gif <anything>\``);
     }
 
-    // Check if it matches a preset category (use one of its search terms)
+    // If it matches a preset category, pick one of its search terms
     let query = input;
     if (gifCategories[input]) {
       const terms = gifCategories[input];
@@ -77,12 +78,12 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor(0x9B59B6)
         .setImage(gifUrl)
-        .setFooter({ text: `🎬 GIF for "${input}" • Powered by Tenor | Wisteria 🌸` });
+        .setFooter({ text: `🎬 GIF for "${input}" • Powered by Giphy | Wisteria 🌸` });
 
       await message.reply({ embeds: [embed] });
     } catch (err) {
       console.error('[GIF]', err);
-      message.reply('❌ Failed to fetch a GIF. Make sure the Tenor API key is valid!');
+      message.reply('❌ Failed to fetch a GIF! Check that your `GIPHY_API_KEY` in `.env` is correct.');
     }
   },
 };
