@@ -411,35 +411,45 @@ const mockCmd = {
   },
 };
 
-// ===================== AFFECTION =====================
+// ===================== GIF HELPER =====================
+async function fetchGif(query) {
+  const apiKey = process.env.TENOR_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const encoded = encodeURIComponent(query);
+    const url = `https://tenor.googleapis.com/v2/search?q=${encoded}&key=${apiKey}&limit=20&contentfilter=medium`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) return null;
+    const item = data.results[Math.floor(Math.random() * data.results.length)];
+    return item.media_formats?.gif?.url || item.media_formats?.tinygif?.url || null;
+  } catch { return null; }
+}
+
+function buildIE({ title, color, description, gifUrl, footer }) {
+  const embed = new EmbedBuilder()
+    .setTitle(title).setColor(color).setDescription(description).setFooter({ text: footer });
+  if (gifUrl) embed.setImage(gifUrl);
+  return embed;
+}
+
+// ===================== INTERACTION COMMANDS =====================
+
 const hugCmd = {
   name: 'hug',
   description: 'Hug someone!',
   async execute(message) {
     const target = message.mentions.users.first();
     if (!target) return message.reply('❓ Mention someone to hug! e.g. `!hug @friend`');
-    const hugs = ['(っ◔◡◔)っ ♥', '(づ ᴗ _ᴗ)づ ♡', '⊂(♡⌂♡)⊃', '(⊃｡•́‿•̀｡)⊃'];
-    const embed = new EmbedBuilder()
-      .setTitle('🤗 Hug!')
-      .setColor(0xFF69B4)
-      .setDescription(`**${message.author.username}** hugs **${target.username}**! \n\n${hugs[Math.floor(Math.random() * hugs.length)]}`)
-      .setFooter({ text: 'Spread the love! 🌸' });
-    message.reply({ embeds: [embed] });
-  },
-};
-
-const highfiveCmd = {
-  name: 'highfive',
-  description: 'High five someone!',
-  async execute(message) {
-    const target = message.mentions.users.first();
-    if (!target) return message.reply('❓ Mention someone to high five! e.g. `!highfive @friend`');
-    const embed = new EmbedBuilder()
-      .setTitle('🙌 High Five!')
-      .setColor(0xFEE75C)
-      .setDescription(`**${message.author.username}** gives **${target.username}** a huge high five!! 🙌✨\n\nSLAP!! That was a good one!`)
-      .setFooter({ text: 'Squad goals! 🌸' });
-    message.reply({ embeds: [embed] });
+    const queries = ['anime hug wholesome', 'cute hug friends anime', 'warm hug anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** wraps **${target.username}** in the warmest hug!! 🤗💜`,
+      `**${message.author.username}** squeezes **${target.username}** tight!! 💕`,
+      `**${message.author.username}** gives **${target.username}** a big ol' bear hug!! 🐻💜`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '🤗 Hug!', color: 0xFF69B4, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'Spread the love! 🌸' })] });
   },
 };
 
@@ -449,12 +459,458 @@ const patCmd = {
   async execute(message) {
     const target = message.mentions.users.first();
     if (!target) return message.reply('❓ Mention someone to pat! e.g. `!pat @friend`');
-    const embed = new EmbedBuilder()
-      .setTitle('✋ Headpat!')
-      .setColor(0xFF69B4)
-      .setDescription(`**${message.author.username}** pats **${target.username}** on the head! ✋\n\n*pat pat pat* You\'re doing great sweetie! 🌸`)
-      .setFooter({ text: 'So wholesome 💜' });
-    message.reply({ embeds: [embed] });
+    const queries = ['anime headpat', 'pat on head cute anime', 'headpat wholesome'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** pats **${target.username}** on the head! ✋\n*pat pat* You're doing great sweetie! 🌸`,
+      `**${message.author.username}** gives **${target.username}** the gentlest headpats! 🌸`,
+      `**${message.author.username}** *pat pat pat* — **${target.username}** you are loved!! 💜`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '✋ Headpat!', color: 0xFF69B4, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'So wholesome 💜' })] });
+  },
+};
+
+const highfiveCmd = {
+  name: 'highfive',
+  description: 'High five someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to high five! e.g. `!highfive @friend`');
+    const queries = ['high five anime', 'high five celebration', 'high five friends'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** gives **${target.username}** a MASSIVE high five!! 🙌✨`,
+      `**${message.author.username}** and **${target.username}** — SLAP!! What a team!! 🙌`,
+      `**${message.author.username}** launches a high five at **${target.username}**!! Don't leave them hanging! 🙌`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '🙌 High Five!', color: 0xFEE75C, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'Squad goals! 🌸' })] });
+  },
+};
+
+const slapCmd = {
+  name: 'slap',
+  description: 'Slap someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to slap! e.g. `!slap @friend`');
+    const queries = ['anime slap funny', 'slap reaction anime', 'slap meme anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** SLAPS **${target.username}** across the face!! 👋💥`,
+      `**${message.author.username}** sends **${target.username}** flying with a slap!! 👋😤`,
+      `**${message.author.username}** delivers a thunderous slap to **${target.username}**!! 👋`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '👋 SLAP!!', color: 0xED4245, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'Ouch! All in good fun 😄 | Wisteria 🌸' })] });
+  },
+};
+
+const hitCmd = {
+  name: 'hit',
+  description: 'Hit someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to hit! e.g. `!hit @friend`');
+    const queries = ['anime bonk hit funny', 'bonk anime meme', 'hit anime funny'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** hits **${target.username}** with maximum force!! 💥`,
+      `**${message.author.username}** BONKS **${target.username}** on the head!! 🔨`,
+      `**${message.author.username}** takes a swing at **${target.username}**!! 💢`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '💥 HIT!!', color: 0xFF6B00, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'Bonk! | Wisteria 🌸' })] });
+  },
+};
+
+const punchCmd = {
+  name: 'punch',
+  description: 'Punch someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to punch! e.g. `!punch @friend`');
+    const queries = ['anime punch action', 'punch meme funny anime', 'anime fist punch'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** punches **${target.username}** straight into the stratosphere!! 👊💥`,
+      `**${message.author.username}** delivers a DEVASTATING punch to **${target.username}**!! 👊`,
+      `**${message.author.username}** winds up and DECKS **${target.username}**!! 👊💢`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '👊 PUNCH!!', color: 0xED4245, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'BOOM! | Wisteria 🌸' })] });
+  },
+};
+
+const kickfunCmd = {
+  name: 'kickfun',
+  description: 'Kick someone (fun, not moderation)! Use !kickfun @user',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to kick! e.g. `!kickfun @friend`');
+    const queries = ['anime kick action', 'roundhouse kick anime', 'kick flying anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** delivers a flying kick to **${target.username}**!! 🦵💨`,
+      `**${message.author.username}** kicks **${target.username}** into next week!! 🦵`,
+      `**${message.author.username}** launches a roundhouse kick at **${target.username}**!! 🦵💥`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '🦵 KICK!!', color: 0xFF6B00, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'POW! | Wisteria 🌸' })] });
+  },
+};
+
+const meowCmd = {
+  name: 'meow',
+  description: 'Meow at someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['cat meow cute', 'anime cat meow', 'cute cat gif'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = target ? [
+      `**${message.author.username}** meows at **${target.username}**!! 🐱 *mrrrow~*`,
+      `**${message.author.username}** 🐱 MEOW!! **${target.username}** notices! UwU`,
+      `**${message.author.username}** demands attention from **${target.username}** via meow!! 🐾`,
+    ] : [
+      `**${message.author.username}** just meowed at the entire server!! 🐱`,
+      `MEOW!! **${message.author.username}** has activated cat mode 🐾`,
+      `**${message.author.username}**: *mrrrow~* 🐱`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '🐱 MEOW!!', color: 0xFF69B4, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'Nyaa~ 🐾 | Wisteria 🌸' })] });
+  },
+};
+
+const clapCmd = {
+  name: 'clap',
+  description: 'Clap for someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['clapping applause anime', 'slow clap meme', 'applause standing ovation'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** claps enthusiastically for **${target.username}**!! 👏✨`
+      : `**${message.author.username}** starts a standing ovation!! 👏`;
+    message.reply({ embeds: [buildIE({ title: '👏 CLAP CLAP CLAP!!', color: 0xFEE75C, description: desc, gifUrl, footer: 'Bravo!! 🌸' })] });
+  },
+};
+
+const insultLines = [
+  "You're the human equivalent of a participation trophy. 🏆",
+  "I'd explain it to you, but I left my crayons at home. 🖍️",
+  "You're not stupid — you just have really bad luck thinking. 🧠",
+  "You're like a software update — whenever I see you, I think 'not now.' 💻",
+  "Your birth certificate is an apology letter from the hospital. 📃",
+  "I'd roast you, but I'm not good at cooking garbage. 🍳",
+  "You have the energy of a damp paper towel. 🪣",
+  "You're proof that even evolution makes mistakes sometimes. 🦕",
+  "Your IQ test results came back — negative. 📊",
+  "You're like a Monday — nobody actually wants you. 📅",
+  "You're so slow, you could be overtaken by a parked car. 🚗",
+  "I've seen better comebacks on a boomerang. 🪃",
+  "You bring everyone so much joy when you leave the room. 😄",
+  "I would roast you, but my mom said I'm not allowed to burn trash. 🗑️",
+  "If brains were dynamite, you wouldn't have enough to blow your hat off. 💣",
+];
+
+const insultCmd = {
+  name: 'insult',
+  description: 'Roast/insult someone (all in good fun!)',
+  async execute(message) {
+    const target = message.mentions.users.first() || message.author;
+    const queries = ['roast burn reaction anime', 'oh no reaction anime', 'oof reaction meme'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const insult = insultLines[Math.floor(Math.random() * insultLines.length)];
+    message.reply({ embeds: [buildIE({ title: '🔥 Ooh, That Hurt!!', color: 0xFF6B00, description: `${target} — ${insult}`, gifUrl, footer: `Roasted by ${message.author.username} | All in good fun 😄 | Wisteria 🌸` })] });
+  },
+};
+
+const waveCmd = {
+  name: 'wave',
+  description: 'Wave at someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['anime wave hello', 'waving hand anime cute', 'wave hi anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** waves hello at **${target.username}**!! 👋😊`
+      : `**${message.author.username}** waves at the whole server!! 👋`;
+    message.reply({ embeds: [buildIE({ title: '👋 WAVE!!', color: 0x57F287, description: desc, gifUrl, footer: 'Heyy!! 🌸' })] });
+  },
+};
+
+const pokeCmd = {
+  name: 'poke',
+  description: 'Poke someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to poke! e.g. `!poke @friend`');
+    const queries = ['anime poke funny', 'poke reaction anime', 'finger poke anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** pokes **${target.username}**!! 👉 *boop*`,
+      `**${message.author.username}** keeps poking **${target.username}**... relentlessly 👉👉`,
+      `**${message.author.username}** gives **${target.username}** the most annoying poke!! 👉`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '👉 POKE!!', color: 0xFEE75C, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: '*boop* | Wisteria 🌸' })] });
+  },
+};
+
+const boopCmd = {
+  name: 'boop',
+  description: 'Boop someone on the nose!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to boop! e.g. `!boop @friend`');
+    const queries = ['boop nose anime cute', 'nose boop cat', 'anime boop cute'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    message.reply({ embeds: [buildIE({ title: '👆 BOOP!!', color: 0xFF69B4, description: `**${message.author.username}** boops **${target.username}** right on the nose!! 👆✨\n*boop!*`, gifUrl, footer: 'Gotcha! 🌸' })] });
+  },
+};
+
+const cuddleCmd = {
+  name: 'cuddle',
+  description: 'Cuddle someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to cuddle! e.g. `!cuddle @friend`');
+    const queries = ['anime cuddle wholesome', 'cuddle cute anime', 'snuggle anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** snuggles up to **${target.username}** 🥺💜`,
+      `**${message.author.username}** curls up and cuddles **${target.username}**!! So wholesome 💕`,
+      `**${message.author.username}** and **${target.username}** — cuddle time!! 🌸`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '🥺 Cuddle Time!!', color: 0xFF69B4, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'Wholesome 100 💜 | Wisteria 🌸' })] });
+  },
+};
+
+const biteCmd = {
+  name: 'bite',
+  description: 'Bite someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to bite! e.g. `!bite @friend`');
+    const queries = ['anime bite funny', 'nom nom bite anime', 'playful bite anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** bites **${target.username}**!! NOM NOM 😤`,
+      `**${message.author.username}** chomps down on **${target.username}**!! 🦷`,
+      `**${message.author.username}** takes a big bite of **${target.username}**!! 😬`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '😤 CHOMP!!', color: 0xED4245, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'NOM! | Wisteria 🌸' })] });
+  },
+};
+
+const lickCmd = {
+  name: 'lick',
+  description: 'Lick someone (weird but funny)!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to lick! e.g. `!lick @friend`');
+    const queries = ['anime lick funny', 'lick reaction anime', 'cat lick anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** licks **${target.username}**... why tho 👅`,
+      `**${message.author.username}** just straight up licked **${target.username}**. Iconic 👅`,
+      `**${message.author.username}** licks **${target.username}** like a cat 😼`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '👅 LICK!!', color: 0xFF69B4, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'Why are you like this 😭 | Wisteria 🌸' })] });
+  },
+};
+
+const stareCmd = {
+  name: 'stare',
+  description: 'Stare at someone intensely!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['anime intense stare', 'staring meme anime', 'creepy stare anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** stares INTENSELY at **${target.username}**... 👀`
+      : `**${message.author.username}** stares into the void... 👀`;
+    message.reply({ embeds: [buildIE({ title: '👀 STARING!!', color: 0x5865F2, description: desc, gifUrl, footer: '...👀... | Wisteria 🌸' })] });
+  },
+};
+
+const cryCmd = {
+  name: 'cry',
+  description: 'Cry dramatically!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['anime crying dramatic', 'sobbing anime', 'cry tears anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** cries because of **${target.username}** 😭💔`
+      : `**${message.author.username}** is sobbing uncontrollably 😭`;
+    message.reply({ embeds: [buildIE({ title: '😭 CRYING!!', color: 0x5865F2, description: desc, gifUrl, footer: "It's okay to cry 💜 | Wisteria 🌸" })] });
+  },
+};
+
+const blushCmd = {
+  name: 'blush',
+  description: 'Blush at someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['anime blush embarrassed', 'blushing anime cute', 'embarrassed blush anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** blushes when looking at **${target.username}**!! 😳💕`
+      : `**${message.author.username}** is blushing really hard right now 😳`;
+    message.reply({ embeds: [buildIE({ title: '😳 BLUSH!!', color: 0xFF69B4, description: desc, gifUrl, footer: 'Awww 💜 | Wisteria 🌸' })] });
+  },
+};
+
+const danceCmd = {
+  name: 'dance',
+  description: 'Dance with someone or alone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['anime dance happy', 'dance celebration anime', 'cute dance anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** grabs **${target.username}** and they start dancing!! 💃🕺`
+      : `**${message.author.username}** busts out the most incredible dance moves!! 💃`;
+    message.reply({ embeds: [buildIE({ title: '💃 DANCE PARTY!!', color: 0x9B59B6, description: desc, gifUrl, footer: 'Get it!! 🌸' })] });
+  },
+};
+
+const winkCmd = {
+  name: 'wink',
+  description: 'Wink at someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['anime wink cute', 'wink reaction anime', 'smirk wink anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** winks at **${target.username}** 😉💜`
+      : `**${message.author.username}** winks mysteriously 😉`;
+    message.reply({ embeds: [buildIE({ title: '😉 WINK!!', color: 0xFEE75C, description: desc, gifUrl, footer: '😉 | Wisteria 🌸' })] });
+  },
+};
+
+const smugCmd = {
+  name: 'smug',
+  description: 'Make a smug face!',
+  async execute(message) {
+    const queries = ['anime smug face', 'smug expression anime', 'anime smirk smug'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** puts on the smuggest face imaginable 😏`,
+      `**${message.author.username}** is feeling VERY smug right now 😏✨`,
+      `**${message.author.username}** 😏 they know something you don't`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '😏 SMUG MODE!!', color: 0x9B59B6, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: '😏 | Wisteria 🌸' })] });
+  },
+};
+
+const facepalmCmd = {
+  name: 'facepalm',
+  description: 'Facepalm at someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['anime facepalm reaction', 'facepalm disappointed anime', 'oh no facepalm'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** facepalms because of **${target.username}** 🤦`
+      : `**${message.author.username}** facepalms at everything 🤦`;
+    message.reply({ embeds: [buildIE({ title: '🤦 FACEPALM!!', color: 0xED4245, description: desc, gifUrl, footer: 'Why... | Wisteria 🌸' })] });
+  },
+};
+
+const throwCmd = {
+  name: 'throw',
+  description: 'Throw something at someone!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    if (!target) return message.reply('❓ Mention someone to throw at! e.g. `!throw @friend`');
+    const items = ['🍅 a tomato', '🧸 a teddy bear', '🍕 a pizza slice', '🎸 a guitar', '🧊 an ice cube', '🎂 a cake', '🥾 a boot', '🪣 a bucket of water', '🥚 an egg', '🎃 a pumpkin'];
+    const item = items[Math.floor(Math.random() * items.length)];
+    const queries = ['anime throw funny', 'throwing object anime', 'yeet throw anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    message.reply({ embeds: [buildIE({ title: '🎯 YEET!!', color: 0xFF6B00, description: `**${message.author.username}** throws ${item} at **${target.username}**!! YEET!! 🎯`, gifUrl, footer: 'YEETED! | Wisteria 🌸' })] });
+  },
+};
+
+const shrugCmd = {
+  name: 'shrug',
+  description: 'Shrug!',
+  async execute(message) {
+    const queries = ['anime shrug whatever', 'shrug reaction anime', 'whatever shrug anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** shrugs. ¯\\_(ツ)_/¯`,
+      `**${message.author.username}**: "idk lol" 🤷`,
+      `**${message.author.username}** doesn't know, doesn't care 🤷`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '🤷 SHRUG!!', color: WISTERIA_COLOR, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: '¯\\_(ツ)_/¯ | Wisteria 🌸' })] });
+  },
+};
+
+const screamCmd = {
+  name: 'scream',
+  description: 'SCREAM!!',
+  async execute(message) {
+    const queries = ['anime scream reaction', 'screaming anime funny', 'loud scream anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** is SCREAMING into the void!! AAAAAAAAAA 😱`,
+      `**${message.author.username}**: AAAAAAAAAAAAAAAA 😱💀`,
+      `**${message.author.username}** lets out an INHUMAN scream 😱`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '😱 AAAAAAAAA!!', color: 0xED4245, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'AAAAA | Wisteria 🌸' })] });
+  },
+};
+
+const confusedCmd = {
+  name: 'confused',
+  description: 'React with confusion!',
+  async execute(message) {
+    const queries = ['anime confused reaction', 'confused math meme', 'what confused anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** has absolutely no idea what's going on 😵`,
+      `**${message.author.username}**: "Wait... what??" 😕`,
+      `**${message.author.username}** is completely and utterly confused rn 🤔`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '😵 CONFUSED!!', color: 0xFEE75C, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'What is happening | Wisteria 🌸' })] });
+  },
+};
+
+const shockedCmd = {
+  name: 'shocked',
+  description: 'React with shock!',
+  async execute(message) {
+    const queries = ['anime shocked reaction', 'omg shocked anime', 'gasp shocked anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const msgs = [
+      `**${message.author.username}** is absolutely SHOCKED!! 😱`,
+      `**${message.author.username}**: *GASP* 😱`,
+      `**${message.author.username}** cannot believe what just happened!! 😱`,
+    ];
+    message.reply({ embeds: [buildIE({ title: '😱 SHOCKED!!', color: 0xED4245, description: msgs[Math.floor(Math.random() * msgs.length)], gifUrl, footer: 'OMG!! | Wisteria 🌸' })] });
+  },
+};
+
+const laughCmd = {
+  name: 'laugh',
+  description: 'Laugh at something!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['laughing anime lol', 'lmao laugh anime', 'anime laughing funny'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** is DYING of laughter at **${target.username}**!! 😂💀`
+      : `**${message.author.username}** is cackling uncontrollably!! 😂💀`;
+    message.reply({ embeds: [buildIE({ title: '😂 LMAOOO!!', color: 0xFEE75C, description: desc, gifUrl, footer: 'Crying laughing 💀 | Wisteria 🌸' })] });
+  },
+};
+
+const celebrateCmd = {
+  name: 'celebrate',
+  description: 'Celebrate!',
+  async execute(message) {
+    const target = message.mentions.users.first();
+    const queries = ['anime celebrate confetti', 'celebration party anime', 'congrats celebrate anime'];
+    const gifUrl = await fetchGif(queries[Math.floor(Math.random() * queries.length)]);
+    const desc = target
+      ? `**${message.author.username}** celebrates **${target.username}**!! 🎉🎊 LET'S GOOO!!`
+      : `**${message.author.username}** is CELEBRATING!! 🎉🎊`;
+    message.reply({ embeds: [buildIE({ title: '🎉 CELEBRATE!!', color: 0xFFD700, description: desc, gifUrl, footer: "LET'S GOOO 🌸" })] });
   },
 };
 
@@ -569,8 +1025,48 @@ const truthCmd = {
       .setTitle('🤔 Truth!')
       .setColor(0x5865F2)
       .setDescription(`**${message.author.username}**, here's your truth:\n\n> ${q}`)
-      .setFooter({ text: 'Answer honestly! | Wisteria 🌸' });
-    message.reply({ embeds: [embed] });
+      .setFooter({ text: 'Answer honestly! React ✅ if you answered, ❌ if you skipped! | Wisteria 🌸' });
+    const sent = await message.reply({ embeds: [embed] });
+    await sent.react('✅');
+    await sent.react('❌');
+
+    // Wait up to 60 seconds for the user to react
+    const filter = (reaction, user) => ['✅', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
+    try {
+      const collected = await sent.awaitReactions({ filter, max: 1, time: 60_000, errors: ['time'] });
+      const reaction = collected.first();
+      if (reaction.emoji.name === '✅') {
+        const successEmbed = new EmbedBuilder()
+          .setTitle('✅ Truth Completed!')
+          .setColor(0x57F287)
+          .setDescription(`**${message.author.username}** answered the truth! Well done! 🎉`)
+          .setFooter({ text: 'Honesty is the best policy | Wisteria 🌸' });
+        message.channel.send({ embeds: [successEmbed] });
+      } else {
+        const failPenalties = [
+          'You must sing a full verse of a song of the group\'s choosing!',
+          'You have to do 15 push-ups right now!',
+          'You must share an embarrassing photo!',
+          'You owe everyone a compliment — one for each person in the chat!',
+          'You have to speak in a funny accent for the next 5 minutes!',
+        ];
+        const penalty = failPenalties[Math.floor(Math.random() * failPenalties.length)];
+        const failEmbed = new EmbedBuilder()
+          .setTitle('❌ Truth Skipped — Penalty Time!')
+          .setColor(0xED4245)
+          .setDescription(`**${message.author.username}** chickened out on the truth! 😱\n\n**Penalty:** ${penalty}`)
+          .setFooter({ text: 'No pain, no gain! | Wisteria 🌸' });
+        message.channel.send({ embeds: [failEmbed] });
+      }
+    } catch {
+      // Timed out — no reaction
+      const timeoutEmbed = new EmbedBuilder()
+        .setTitle('⏰ Time\'s Up — Penalty Time!')
+        .setColor(0xFEE75C)
+        .setDescription(`**${message.author.username}** took too long to answer the truth! 😬\n\n**Penalty:** Do 10 jumping jacks right now!`)
+        .setFooter({ text: 'Silence is not an answer! | Wisteria 🌸' });
+      message.channel.send({ embeds: [timeoutEmbed] });
+    }
   },
 };
 
@@ -583,8 +1079,48 @@ const dareCmd = {
       .setTitle('😈 Dare!')
       .setColor(0xED4245)
       .setDescription(`**${message.author.username}**, you dare:\n\n> ${d}`)
-      .setFooter({ text: 'No chickening out! | Wisteria 🌸' });
-    message.reply({ embeds: [embed] });
+      .setFooter({ text: 'No chickening out! React ✅ when done, ❌ if you refuse! | Wisteria 🌸' });
+    const sent = await message.reply({ embeds: [embed] });
+    await sent.react('✅');
+    await sent.react('❌');
+
+    // Wait up to 120 seconds for the user to react
+    const filter = (reaction, user) => ['✅', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
+    try {
+      const collected = await sent.awaitReactions({ filter, max: 1, time: 120_000, errors: ['time'] });
+      const reaction = collected.first();
+      if (reaction.emoji.name === '✅') {
+        const successEmbed = new EmbedBuilder()
+          .setTitle('✅ Dare Completed!')
+          .setColor(0x57F287)
+          .setDescription(`**${message.author.username}** completed the dare! Absolute legend! 🔥`)
+          .setFooter({ text: 'Brave soul! | Wisteria 🌸' });
+        message.channel.send({ embeds: [successEmbed] });
+      } else {
+        const failPenalties = [
+          'You must let the group change your profile picture for 24 hours!',
+          'You have to post an embarrassing status/story!',
+          'You owe everyone a 30-second dance performance!',
+          'You must send a voice message singing a nursery rhyme!',
+          'You have to let someone go through your photos for 30 seconds!',
+        ];
+        const penalty = failPenalties[Math.floor(Math.random() * failPenalties.length)];
+        const failEmbed = new EmbedBuilder()
+          .setTitle('❌ Dare Refused — Penalty Time!')
+          .setColor(0xED4245)
+          .setDescription(`**${message.author.username}** refused the dare! Coward! 🐔\n\n**Penalty:** ${penalty}`)
+          .setFooter({ text: 'Courage is a choice! | Wisteria 🌸' });
+        message.channel.send({ embeds: [failEmbed] });
+      }
+    } catch {
+      // Timed out — no reaction
+      const timeoutEmbed = new EmbedBuilder()
+        .setTitle('⏰ Time\'s Up — Penalty Time!')
+        .setColor(0xFEE75C)
+        .setDescription(`**${message.author.username}** didn't react to the dare in time! 👀\n\n**Penalty:** You must send a voice message saying "I am a chicken" three times!`)
+        .setFooter({ text: 'Time waits for no one! | Wisteria 🌸' });
+      message.channel.send({ embeds: [timeoutEmbed] });
+    }
   },
 };
 
