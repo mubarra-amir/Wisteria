@@ -23,12 +23,11 @@ const client = new Client({
   ],
 });
 
-client.commands      = new Collection();
-client.xpData        = {};
+client.commands       = new Collection();
 client.emojiReactions = new Map(); // userId → emoji
-client.annoyedUsers  = new Map();  // guildId → Map<userId, { timer, activatorId, startTime }>
-client.cooldowns     = new Map();  // userId → Map<commandName, lastUsedTime>
-client.streaks       = new Map();  // userId → { streak, lastDate }
+client.annoyedUsers   = new Map(); // guildId → Map<userId, { timer, activatorId, startTime }>
+client.cooldowns      = new Map(); // userId → Map<commandName, lastUsedTime>
+client.streaks        = new Map(); // userId → { streak, lastDate }
 
 // ── Cooldown Config (seconds) ──────────────────
 const COOLDOWNS = {
@@ -41,7 +40,7 @@ const COOLDOWNS = {
   rps:        3,
   dice:       3,
   flip:       3,
-  '8ball':    5,
+  "8ball":    5,
   joke:       8,
   fact:       8,
   compliment: 8,
@@ -187,48 +186,6 @@ const passiveTriggers = [
   },
 ];
 
-// ── XP System ─────────────────────────────────
-function giveXP(message) {
-  const userId = message.author.id;
-  const guildId = message.guild?.id;
-  if (!guildId) return;
-
-  const key = `${guildId}-${userId}`;
-  if (!client.xpData[key]) {
-    client.xpData[key] = { xp: 0, level: 1, username: message.author.username };
-  }
-
-  // Cooldown: only give XP every 60 seconds per user
-  const now = Date.now();
-  const xpCooldownKey = `xp-${key}`;
-  if (client.xpData[xpCooldownKey] && now - client.xpData[xpCooldownKey] < 60000) return;
-  client.xpData[xpCooldownKey] = now;
-
-  const gained = Math.floor(Math.random() * 10) + 5;
-  client.xpData[key].xp += gained;
-  client.xpData[key].username = message.author.username;
-
-  const xpNeeded = client.xpData[key].level * 100;
-  if (client.xpData[key].xp >= xpNeeded) {
-    client.xpData[key].xp -= xpNeeded;
-    client.xpData[key].level += 1;
-
-    const lvl = client.xpData[key].level;
-
-    // Milestone rewards
-    const milestones = { 5: '🌸 Petal Collector', 10: '💜 Wisteria Friend', 25: '⭐ Server Star', 50: '👑 Wisteria Legend' };
-    const milestone = milestones[lvl];
-
-    const embed = new EmbedBuilder()
-      .setColor(WISTERIA_COLOR)
-      .setTitle('🎉 Level Up!!')
-      .setDescription(`Yayyyy!! **${message.author.username}** just hit **Level ${lvl}**!! 🌸💜\nYou're literally POPPING OFF!${milestone ? `\n\n🏆 Milestone unlocked: **${milestone}**` : ''}`)
-      .setThumbnail(message.author.displayAvatarURL());
-
-    message.channel.send({ embeds: [embed] });
-  }
-}
-
 // ── Annoy: Auto-timeout after 2 minutes ───────
 function scheduleAnnoyTimeout(guildId, targetId, targetName, activatorName, channel) {
   const ANNOY_DURATION = 2 * 60 * 1000; // 2 minutes
@@ -261,7 +218,7 @@ client.once('ready', () => {
     { name: '!help | 🌸 Wisteria', type: 0 },
     { name: 'Wordle with friends 🟩', type: 0 },
     { name: '!trivia | Test your brain!', type: 0 },
-    { name: 'your XP go up 📈', type: 3 },
+    { name: 'games with friends 🎮', type: 0 },
   ];
   let i = 0;
   client.user.setActivity(activities[0].name, { type: activities[0].type });
@@ -285,9 +242,6 @@ client.on('messageCreate', async (message) => {
       return;
     }
   }
-
-  // XP
-  if (message.guild) giveXP(message);
 
   // ── Emoji reactions on user mention ──
   if (message.mentions.users.size > 0 && client.emojiReactions.size > 0) {
